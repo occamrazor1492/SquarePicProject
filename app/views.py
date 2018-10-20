@@ -15,6 +15,7 @@ import scipy.misc
 import scipy.cluster
 from codecs import encode, decode
 from colormap import rgb2hex
+import time
 
 @app.route('/')
 @app.route('/index')
@@ -24,28 +25,36 @@ def index():
 
     path2 = "app/static/scaled_img"
     scaled_img_list = list_image(path2)
-    return render_template("index.html", title = "Home", imageList = imageList, scaled_img_list = scaled_img_list)
+    return render_template("index.html", title = "Home", imageList = imageList, scaled_img_list = scaled_img_list, timeStamps = time.time())
 
 @app.route("/uploader", methods = ['GET','POST'])
 def upload_file():
     if request.method == 'POST':
         # one file
         # f = request.files['file']
-        ratio = int(request.form['ratio'])
+        ratioTemp = request.form['ratio']
+        ratio = int(ratioTemp)
         # padColor = int(request.form['padColor'])
-        redColor = int(request.form['redColor'])
-        greenColor = int(request.form['greenColor'])
-        blueColor = int(request.form['blueColor'])
-        # f.save('app/static/uploadImages/' + secure_filename(f.filename))
-        # return 'file uploaded successfully'
+        redColorTemp = request.form['redColor']
+        greenColorTemp = request.form['greenColor']
+        blueColorTemp = request.form['blueColor']
+
 
         # file list
         uploaded_files = request.files.getlist("file[]")
         imageList = []
         for f in uploaded_files:
+            # if user input background colour or not
+            if (not redColorTemp or not greenColorTemp or not blueColorTemp):
+                redColor, greenColor, blueColor = findDominatColor('app/static/uploadImages/' + secure_filename(f.filename))
+            else:
+                redColor = int(redColorTemp)
+                greenColor = int(greenColorTemp)
+                blueColor = int(blueColorTemp)
             imageList.append(f.filename)
             f.save('app/static/uploadImages/' + secure_filename(f.filename))
             h_img = cv2.imread('app/static/uploadImages/' + secure_filename(f.filename)) # horizontal image
+            # got input background colour
             scaled_h_img = resizeAndPad(h_img, (ratio,ratio), redColor, greenColor, blueColor)
             scaled_h_img_path = 'app/static/scaled_img/' + secure_filename(f.filename)
             cv2.imwrite(scaled_h_img_path, scaled_h_img)
@@ -63,7 +72,7 @@ def upload_file():
         # call resizeAndPad
 
 
-        return render_template("index.html", title = "Home", ratio = ratio, scaled_img = f.filename, imageList = imageList, scaled_img_list = imageList)
+        return render_template("index.html", title = "Home", ratio = ratio, scaled_img = f.filename, imageList = imageList, scaled_img_list = imageList, timeStamps = time.time())
 
 # list all image to array
 def list_image(path):
@@ -159,3 +168,4 @@ def findDominatColor(path):
 
 
     print ('most frequent is %s (#%s)' % (peak, str(colour)))
+    return int(peak[0]), int(peak[1]), int(peak[2]) # RGB
