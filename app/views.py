@@ -4,6 +4,11 @@ from flask_dropzone import Dropzone
 from flask_uploads import UploadSet, configure_uploads, IMAGES, patch_request_class
 from werkzeug import secure_filename
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+
 import cv2
 import numpy as np
 import os
@@ -17,6 +22,12 @@ from codecs import encode, decode
 from colormap import rgb2hex
 import time
 
+cloudinary.config(
+  cloud_name = "dirbnqgl0",
+  api_key = "399151117613326",
+  api_secret = "ymLoRnS-AsQ51Qag9BmS3DLFKRc" )
+
+# home page
 @app.route('/')
 @app.route('/index')
 def index():
@@ -26,6 +37,25 @@ def index():
     path2 = "app/static/scaled_img"
     scaled_img_list = list_image(path2)
     return render_template("index.html", title = "Home", imageList = imageList, scaled_img_list = scaled_img_list, timeStamps = time.time())
+
+# upload json obj to cloud, imge[{id:link}]
+@app.route('/json-imagelist', methods=['POST'])
+def json_imagelist():
+    imageList = request.get_json()
+    print (type(imageList))
+    print(type(imageList[1]))
+
+    # handle imagelist obj
+    for image in imageList:
+        link = image["link"]
+
+    
+    return "success"
+
+
+
+
+
 
 @app.route("/uploader", methods = ['GET','POST'])
 def upload_file():
